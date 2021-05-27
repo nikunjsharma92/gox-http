@@ -99,7 +99,6 @@ func (a *Api) IsHttpCodeAcceptable(code int) bool {
 	return false
 }
 
-
 type funcBasedResponseBuilder struct {
 	responseBuilderFunc func(data []byte) (interface{}, error)
 }

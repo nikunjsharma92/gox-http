@@ -1,6 +1,7 @@
 package httpCommand
 
 import (
+	"context"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-http/command"
@@ -19,21 +20,27 @@ type httpCommand struct {
 	client *resty.Client
 }
 
-func (h *httpCommand) Execute(request *command.GoxRequest) chan *command.GoxResponse {
-	h.logger.Debug("got request to execute", zap.Stringer("request", request))
-	responseChannel := make(chan *command.GoxResponse, 1)
+func (h *httpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
+	responseChannel := make(chan *command.GoxResponse)
+	go func() {
+		if result, err := h.Execute(ctx, request); err != nil {
+			responseChannel <- &command.GoxResponse{Err: err}
+		} else {
+			responseChannel <- result
+		}
+	}()
+	return responseChannel
+}
 
-	var err error
+func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+	h.logger.Debug("got request to execute", zap.Stringer("request", request))
+
 	var response *resty.Response
 
 	// Build request with all parameters
-	r, err := h.buildRequest(request)
-
-	// We got error stop here
+	r, err := h.buildRequest(ctx, request)
 	if err != nil {
-		responseChannel <- &command.GoxResponse{Err: err}
-		close(responseChannel)
-		return responseChannel
+		return nil, err
 	}
 
 	// Create the url to call
@@ -53,18 +60,16 @@ func (h *httpCommand) Execute(request *command.GoxRequest) chan *command.GoxResp
 
 	if err != nil {
 		responseObject := h.processError(request, response, err)
-		responseChannel <- responseObject
+		return responseObject, responseObject.Err
 	} else {
 		responseObject := h.processResponse(request, response)
-		responseChannel <- responseObject
+		return responseObject, responseObject.Err
 	}
-
-	close(responseChannel)
-	return responseChannel
 }
 
-func (h *httpCommand) buildRequest(request *command.GoxRequest) (*resty.Request, error) {
+func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequest) (*resty.Request, error) {
 	r := h.client.R()
+	r.SetContext(ctx)
 
 	// Set header
 	if request.Header != nil {

@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -69,7 +70,8 @@ type GoxResponse struct {
 }
 
 type Command interface {
-	Execute(request *GoxRequest) chan *GoxResponse
+	Execute(ctx context.Context, request *GoxRequest) (*GoxResponse, error)
+	ExecuteAsync(ctx context.Context, request *GoxRequest) chan *GoxResponse
 }
 
 func (req *GoxRequest) String() string {
