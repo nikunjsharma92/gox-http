@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/util"
+	"strconv"
+	"strings"
 )
 
 func (c *Config) SetupDefaults() {
@@ -43,6 +45,20 @@ func (c *Config) SetupDefaults() {
 			if util.IsStringEmpty(v.Method) {
 				v.Method = "GET"
 			}
+			if util.IsStringEmpty(v.AcceptableCodes) {
+				v.AcceptableCodes = "200,201"
+			}
+
+			v.acceptableCodes = make([]int, 0)
+			for _, code := range strings.Split(v.AcceptableCodes, ",") {
+				if i, err := strconv.Atoi(code); err == nil {
+					v.acceptableCodes = append(v.acceptableCodes, i)
+				}
+			}
+			if len(v.acceptableCodes) == 0 {
+				v.acceptableCodes = append(v.acceptableCodes, 200)
+				v.acceptableCodes = append(v.acceptableCodes, 201)
+			}
 		}
 	}
 }
@@ -71,4 +87,13 @@ func (a *Api) GetPath(server *Server) string {
 	} else {
 		return fmt.Sprintf("http://%s:%d%s", server.Host, server.Port, a.Path)
 	}
+}
+
+func (a *Api) IsHttpCodeAcceptable(code int) bool {
+	for _, c := range a.acceptableCodes {
+		if c == code {
+			return true
+		}
+	}
+	return false
 }

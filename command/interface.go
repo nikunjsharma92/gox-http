@@ -32,6 +32,7 @@ type Api struct {
 	QueueSize       int    `yaml:"queue_size"`
 	Async           bool   `yaml:"async"`
 	AcceptableCodes string `yaml:"acceptable_codes"`
+	acceptableCodes []int
 }
 
 type Config struct {
@@ -68,7 +69,7 @@ type GoxResponse struct {
 }
 
 type Command interface {
-	Execute(request *GoxRequest) chan GoxResponse
+	Execute(request *GoxRequest) chan *GoxResponse
 }
 
 func (req *GoxRequest) String() string {

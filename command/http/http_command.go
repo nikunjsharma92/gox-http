@@ -19,9 +19,9 @@ type httpCommand struct {
 	client *resty.Client
 }
 
-func (h *httpCommand) Execute(request *command.GoxRequest) chan command.GoxResponse {
+func (h *httpCommand) Execute(request *command.GoxRequest) chan *command.GoxResponse {
 	h.logger.Debug("got request to execute", zap.Stringer("request", request))
-	responseChannel := make(chan command.GoxResponse, 1)
+	responseChannel := make(chan *command.GoxResponse, 1)
 
 	var err error
 	var response *resty.Response
@@ -31,7 +31,7 @@ func (h *httpCommand) Execute(request *command.GoxRequest) chan command.GoxRespo
 
 	// We got error stop here
 	if err != nil {
-		responseChannel <- command.GoxResponse{Err: err}
+		responseChannel <- &command.GoxResponse{Err: err}
 		close(responseChannel)
 		return responseChannel
 	}
@@ -51,39 +51,12 @@ func (h *httpCommand) Execute(request *command.GoxRequest) chan command.GoxRespo
 		response, err = r.Delete(finalUrlToRequest)
 	}
 
-	if err != nil && response != nil {
-		responseChannel <- command.GoxResponse{
-			Body:       response.Body(),
-			StatusCode: response.StatusCode(),
-			Err:        errors.Wrap(err, "got error from server with response"),
-		}
-	} else if err != nil {
-		responseChannel <- command.GoxResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.Wrap(err, "got error from server without response"),
-		}
+	if err != nil {
+		responseObject := h.processError(request, response, err)
+		responseChannel <- responseObject
 	} else {
-
-		var processedResponse interface{}
-		var errorInBuildingResponse error
-		if request.ResponseBuilder != nil && response.Body() != nil {
-			processedResponse, errorInBuildingResponse = request.ResponseBuilder.Response(response.Body())
-		}
-
-		if errorInBuildingResponse != nil {
-			responseChannel <- command.GoxResponse{
-				StatusCode: response.StatusCode(),
-				Body:       response.Body(),
-				Err:        errors.Wrap(errorInBuildingResponse, "got error from server without response"),
-			}
-		} else {
-			responseChannel <- command.GoxResponse{
-				StatusCode: response.StatusCode(),
-				Body:       response.Body(),
-				Response:   processedResponse,
-				Err:        errors.Wrap(errorInBuildingResponse, "got error from server without response"),
-			}
-		}
+		responseObject := h.processResponse(request, response)
+		responseChannel <- responseObject
 	}
 
 	close(responseChannel)
@@ -138,6 +111,54 @@ func (h *httpCommand) buildRequest(request *command.GoxRequest) (*resty.Request,
 	}
 
 	return r, nil
+}
+
+func (h *httpCommand) processError(request *command.GoxRequest, response *resty.Response, errorFromCall error) *command.GoxResponse {
+	if errorFromCall != nil && response != nil {
+		if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
+			return h.processResponse(request, response)
+		} else {
+			return &command.GoxResponse{
+				Body:       response.Body(),
+				StatusCode: response.StatusCode(),
+				Err:        errors.Wrap(errorFromCall, "got error from server with response"),
+			}
+		}
+	} else if errorFromCall != nil {
+		if h.api.IsHttpCodeAcceptable(http.StatusInternalServerError) {
+			return h.processResponse(request, response)
+		} else {
+			return &command.GoxResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errors.Wrap(errorFromCall, "got error from server without response"),
+			}
+		}
+	}
+	return nil
+}
+
+func (h *httpCommand) processResponse(request *command.GoxRequest, response *resty.Response) *command.GoxResponse {
+
+	var processedResponse interface{}
+	var errorInBuildingResponse error
+	if request.ResponseBuilder != nil && response.Body() != nil {
+		processedResponse, errorInBuildingResponse = request.ResponseBuilder.Response(response.Body())
+	}
+
+	if errorInBuildingResponse != nil {
+		return &command.GoxResponse{
+			StatusCode: response.StatusCode(),
+			Body:       response.Body(),
+			Err:        errors.Wrap(errorInBuildingResponse, "got error from server without response"),
+		}
+	} else {
+		return &command.GoxResponse{
+			StatusCode: response.StatusCode(),
+			Body:       response.Body(),
+			Response:   processedResponse,
+			Err:        errors.Wrap(errorInBuildingResponse, "got error from server without response"),
+		}
+	}
 }
 
 func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.Api) (command.Command, error) {

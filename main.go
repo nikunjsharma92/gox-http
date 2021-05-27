@@ -2,6 +2,6 @@ package goxHttp
 
 import "fmt"
 
-func main()  {
+func main() {
 	fmt.Println("gox-http")
 }
