@@ -1,6 +1,7 @@
 package goxHttpApi
 
 import (
+	"context"
 	"errors"
 	"github.com/devlibx/gox-base/test"
 	"github.com/devlibx/gox-http/command"
@@ -19,7 +20,7 @@ func TestGoxHttpContext_WithNonExistingApiName(t *testing.T) {
 	goxHttpCtx, err := NewGoxHttpContext(cf, &config)
 	assert.NoError(t, err)
 
-	result := <-goxHttpCtx.Execute("badName", nil)
-	assert.Error(t, result.Err)
-	assert.True(t, errors.Is(result.Err, ErrCommandNotRegisteredForApi))
+	_, err = goxHttpCtx.Execute(context.TODO(), "badName", nil)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, ErrCommandNotRegisteredForApi))
 }

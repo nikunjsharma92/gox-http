@@ -67,3 +67,30 @@ func TestHttpCommand_Async(t *testing.T) {
 		fmt.Println(r.Response)
 	}
 }
+
+func TestBuilder(t *testing.T) {
+	cf, _ := test.MockCf(t)
+
+	config := command.Config{}
+	err := testData.GetTestConfig(&config)
+	assert.NoError(t, err)
+
+	server, err := config.FindServerByName("jsonplaceholder")
+	assert.NoError(t, err)
+
+	api, err := config.FindApiByName("getPosts")
+	assert.NoError(t, err)
+
+	httpCmd, err := NewHttpCommand(cf, server, api)
+	assert.NoError(t, err)
+
+	request := command.NewGoxRequestBuilder("getPosts").
+		WithContentTypeJson().
+		WithPathParam("id", 1).
+		WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
+		Build()
+
+	result, err := httpCmd.Execute(context.TODO(), request)
+	assert.NoError(t, err)
+	fmt.Println(result.Response)
+}

@@ -5,6 +5,7 @@ import (
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/util"
+	"net/http"
 	"strconv"
 	"strings"
 )
@@ -122,4 +123,80 @@ func (f *jsonToObjectResponseBuilder) Response(data []byte) (interface{}, error)
 
 func NewJsonToObjectResponseBuilder(out interface{}) ResponseBuilder {
 	return &jsonToObjectResponseBuilder{out: out}
+}
+
+// --------------------------------------- Create Builder --------------------------------------------------------------
+
+type goxRequestBuilder struct {
+	request *GoxRequest
+	api     string
+}
+
+func (b *goxRequestBuilder) WithContentTypeJson() *goxRequestBuilder {
+	return b.WithHeader("content-type", "application/json")
+}
+func (b *goxRequestBuilder) WithHeader(name string, value interface{}) *goxRequestBuilder {
+	if b.request.Header == nil {
+		b.request.Header = http.Header{}
+	}
+	b.request.Header.Add(name, serialization.StringifySuppressError(value, ""))
+	return b
+}
+
+func (b *goxRequestBuilder) WithPathParam(name string, value interface{}) *goxRequestBuilder {
+	if b.request.PathParam == nil {
+		b.request.PathParam = map[string][]string{}
+	}
+	if _, ok := b.request.PathParam[name]; !ok {
+		b.request.PathParam[name] = make([]string, 0)
+	}
+
+	if str, ok := value.(string); ok {
+		b.request.PathParam[name] = append(b.request.PathParam[name], str)
+	} else {
+		b.request.PathParam[name] = append(b.request.PathParam[name], serialization.StringifySuppressError(value, ""))
+	}
+	return b
+}
+
+func (b *goxRequestBuilder) WithQueryParam(name string, value interface{}) *goxRequestBuilder {
+	if b.request.QueryParam == nil {
+		b.request.QueryParam = map[string][]string{}
+	}
+	if _, ok := b.request.QueryParam[name]; !ok {
+		b.request.QueryParam[name] = make([]string, 0)
+	}
+
+	if str, ok := value.(string); ok {
+		b.request.QueryParam[name] = append(b.request.QueryParam[name], str)
+	} else {
+		b.request.QueryParam[name] = append(b.request.QueryParam[name], serialization.StringifySuppressError(value, ""))
+	}
+	return b
+}
+
+func (b *goxRequestBuilder) WithResponseBuilder(builder ResponseBuilder) *goxRequestBuilder {
+	b.request.ResponseBuilder = builder
+	return b
+}
+
+func (b *goxRequestBuilder) WithBodyProvider(builder BodyProvider) *goxRequestBuilder {
+	b.request.BodyProvider = builder
+	return b
+}
+
+func (b *goxRequestBuilder) WithBody(body interface{}) *goxRequestBuilder {
+	b.request.Body = body
+	return b
+}
+
+func (b *goxRequestBuilder) Build() *GoxRequest {
+	return b.request
+}
+
+func NewGoxRequestBuilder(api string) *goxRequestBuilder {
+	return &goxRequestBuilder{
+		request: &GoxRequest{},
+		api:     api,
+	}
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+//go:generate mockgen -source=interface.go -destination=../mocks/command/mock_interface.go -package=mockGoxHttp
+
 // List of all servers
 type Servers map[string]*Server
 

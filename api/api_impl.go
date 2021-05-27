@@ -1,6 +1,7 @@
 package goxHttpApi
 
 import (
+	"context"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-http/command"
@@ -14,6 +15,18 @@ type goxHttpContextImpl struct {
 	logger   *zap.Logger
 	config   *command.Config
 	commands map[string]command.Command
+}
+
+func (g *goxHttpContextImpl) Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error) {
+	if cmd, ok := g.commands[api]; !ok {
+		return nil, errors.Wrap(ErrCommandNotRegisteredForApi, "command to execute not found: name=%s", api)
+	} else {
+		return cmd.Execute(ctx, request)
+	}
+}
+
+func (g *goxHttpContextImpl) ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse {
+	panic("implement me")
 }
 
 // Internal setup method
@@ -39,24 +52,4 @@ func (g *goxHttpContextImpl) setup() error {
 
 	}
 	return nil
-}
-
-// Execute a request
-func (g *goxHttpContextImpl) Execute(api string, request *command.GoxRequest) chan command.GoxResponse {
-
-	if cmd, ok := g.commands[api]; !ok {
-		// Api command not found - return a error channel
-		resultChannel := make(chan command.GoxResponse, 1)
-		resultChannel <- command.GoxResponse{
-			Err: errors.Wrap(ErrCommandNotRegisteredForApi, "command to execute not found: name=%s", api),
-		}
-		close(resultChannel)
-		return resultChannel
-	} else {
-		_ = cmd
-
-		resultChannel := make(chan command.GoxResponse, 2)
-		close(resultChannel)
-		return resultChannel
-	}
 }
