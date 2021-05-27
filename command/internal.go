@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/util"
 	"strconv"
 	"strings"
@@ -96,4 +97,30 @@ func (a *Api) IsHttpCodeAcceptable(code int) bool {
 		}
 	}
 	return false
+}
+
+
+type funcBasedResponseBuilder struct {
+	responseBuilderFunc func(data []byte) (interface{}, error)
+}
+
+func (f *funcBasedResponseBuilder) Response(data []byte) (interface{}, error) {
+	return f.responseBuilderFunc(data)
+}
+
+func NewFunctionBasedResponseBuilder(f func(data []byte) (interface{}, error)) ResponseBuilder {
+	return &funcBasedResponseBuilder{responseBuilderFunc: f}
+}
+
+type jsonToObjectResponseBuilder struct {
+	out interface{}
+}
+
+func (f *jsonToObjectResponseBuilder) Response(data []byte) (interface{}, error) {
+	err := serialization.JsonBytesToObject(data, f.out)
+	return f.out, err
+}
+
+func NewJsonToObjectResponseBuilder(out interface{}) ResponseBuilder {
+	return &jsonToObjectResponseBuilder{out: out}
 }

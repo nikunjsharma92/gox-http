@@ -75,15 +75,3 @@ type Command interface {
 func (req *GoxRequest) String() string {
 	return fmt.Sprintf("")
 }
-
-type funcBasedResponseBuilder struct {
-	responseBuilderFunc func(data []byte) (interface{}, error)
-}
-
-func (f *funcBasedResponseBuilder) Response(data []byte) (interface{}, error) {
-	return f.responseBuilderFunc(data)
-}
-
-func NewFunctionBasedResponseBuilder(f func(data []byte) (interface{}, error)) ResponseBuilder {
-	return &funcBasedResponseBuilder{responseBuilderFunc: f}
-}

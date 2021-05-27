@@ -28,9 +28,7 @@ func TestHttpCommand(t *testing.T) {
 
 	result := <-httpCmd.Execute(&command.GoxRequest{
 		PathParam: map[string][]string{"id": {"1"}},
-		ResponseBuilder: command.NewFunctionBasedResponseBuilder(func(data []byte) (interface{}, error) {
-			return gox.StringObjectMapFromString(string(data))
-		}),
+		ResponseBuilder: command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{}),
 	})
 	assert.NoError(t, result.Err)
 	fmt.Println(result.Response)
