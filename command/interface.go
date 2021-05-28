@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"github.com/devlibx/gox-base"
 	"net/http"
 )
 
@@ -69,6 +70,19 @@ type GoxResponse struct {
 	Response   interface{}
 	StatusCode int
 	Err        error
+}
+
+func (r *GoxResponse) AsStringObjectMapOrEmpty() gox.StringObjectMap {
+	if d, ok := r.Response.(*gox.StringObjectMap); ok {
+		return *d
+	} else if r.Body != nil {
+		if d, err := gox.StringObjectMapFromString(string(r.Body)); err == nil {
+			return d
+		} else {
+			return gox.StringObjectMap{}
+		}
+	}
+	return nil
 }
 
 type Command interface {

@@ -1,13 +1,17 @@
-package testData
+package testhelper
 
 import (
 	"github.com/devlibx/gox-base/serialization"
+	_ "embed"
 )
 
 func GetTestConfig(config interface{}) error {
 	// return serialization.ReadYaml("./test_config.yaml", config)
 	return serialization.ReadYamlFromString(TestConfig, config)
 }
+
+//go:embed test_config_real_server.yaml
+var TestConfigWithRealServer string
 
 var TestConfig = `
 servers:

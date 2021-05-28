@@ -6,7 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/test"
 	"github.com/devlibx/gox-http/command"
-	"github.com/devlibx/gox-http/testData"
+	"github.com/devlibx/gox-http/testhelper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -16,7 +16,7 @@ func TestHttpCommand_Sync(t *testing.T) {
 	cf, _ := test.MockCf(t)
 
 	config := command.Config{}
-	err := testData.GetTestConfig(&config)
+	err := testhelper.GetTestConfig(&config)
 	assert.NoError(t, err)
 
 	server, err := config.FindServerByName("jsonplaceholder")
@@ -40,7 +40,7 @@ func TestHttpCommand_Async(t *testing.T) {
 	cf, _ := test.MockCf(t)
 
 	config := command.Config{}
-	err := testData.GetTestConfig(&config)
+	err := testhelper.GetTestConfig(&config)
 	assert.NoError(t, err)
 
 	server, err := config.FindServerByName("jsonplaceholder")
@@ -72,7 +72,7 @@ func TestBuilder(t *testing.T) {
 	cf, _ := test.MockCf(t)
 
 	config := command.Config{}
-	err := testData.GetTestConfig(&config)
+	err := testhelper.GetTestConfig(&config)
 	assert.NoError(t, err)
 
 	server, err := config.FindServerByName("jsonplaceholder")
@@ -94,3 +94,5 @@ func TestBuilder(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(result.Response)
 }
+
+

@@ -1,0 +1,11 @@
+servers:
+  testServer:
+    host: localhost
+    port: 9123
+
+apis:
+  delay_timeout_10:
+    path: /delay
+    server: testServer
+    timeout: 10
+    concurrency: 3

@@ -60,7 +60,10 @@ func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) 
 	}
 
 	if err != nil {
-		responseObject := h.processError(request, response, err)
+		responseObject := &command.GoxResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.Wrap(err, "got error in making http call"),
+		}
 		return responseObject, responseObject.Err
 	} else {
 		responseObject := h.processResponse(request, response)
@@ -119,7 +122,14 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	return r, nil
 }
 
-func (h *httpCommand) processError(request *command.GoxRequest, response *resty.Response, errorFromCall error) *command.GoxResponse {
+func (h *httpCommand) processError(errorFromCall error) *command.GoxResponse {
+	return &command.GoxResponse{
+		StatusCode: http.StatusInternalServerError,
+		Err:        errors.Wrap(errorFromCall, "got error in making http call"),
+	}
+}
+/*
+func (h *httpCommand) processError1(request *command.GoxRequest, response *resty.Response, errorFromCall error) *command.GoxResponse {
 	if errorFromCall != nil && response != nil {
 		if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
 			return h.processResponse(request, response)
@@ -141,28 +151,54 @@ func (h *httpCommand) processError(request *command.GoxRequest, response *resty.
 		}
 	}
 	return nil
-}
+}*/
 
 func (h *httpCommand) processResponse(request *command.GoxRequest, response *resty.Response) *command.GoxResponse {
-
 	var processedResponse interface{}
-	var errorInBuildingResponse error
-	if request.ResponseBuilder != nil && response.Body() != nil {
-		processedResponse, errorInBuildingResponse = request.ResponseBuilder.Response(response.Body())
-	}
+	var err error
 
-	if errorInBuildingResponse != nil {
-		return &command.GoxResponse{
-			StatusCode: response.StatusCode(),
-			Body:       response.Body(),
-			Err:        errors.Wrap(errorInBuildingResponse, "got error from server without response"),
+	if response.IsError() {
+
+		if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
+			if request.ResponseBuilder != nil && response.Body() != nil {
+				processedResponse, err = request.ResponseBuilder.Response(response.Body())
+			}
+		} else {
+			err = errors.New("got error response from server")
 		}
+
+		if err != nil {
+			return &command.GoxResponse{
+				StatusCode: response.StatusCode(),
+				Body:       response.Body(),
+				Err:        errors.Wrap(err, "failed to build response body from server response"),
+			}
+		} else {
+			return &command.GoxResponse{
+				StatusCode: response.StatusCode(),
+				Body:       response.Body(),
+				Response:   processedResponse,
+			}
+		}
+
 	} else {
-		return &command.GoxResponse{
-			StatusCode: response.StatusCode(),
-			Body:       response.Body(),
-			Response:   processedResponse,
-			Err:        errors.Wrap(errorInBuildingResponse, "got error from server without response"),
+
+		if request.ResponseBuilder != nil && response.Body() != nil {
+			processedResponse, err = request.ResponseBuilder.Response(response.Body())
+		}
+
+		if err != nil {
+			return &command.GoxResponse{
+				StatusCode: response.StatusCode(),
+				Body:       response.Body(),
+				Err:        errors.Wrap(err, "failed to build response body from server response"),
+			}
+		} else {
+			return &command.GoxResponse{
+				StatusCode: response.StatusCode(),
+				Body:       response.Body(),
+				Response:   processedResponse,
+			}
 		}
 	}
 }
@@ -176,6 +212,5 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 		client:        resty.New(),
 	}
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
-
 	return c, nil
 }
