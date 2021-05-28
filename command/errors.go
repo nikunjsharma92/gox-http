@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/devlibx/gox-base/util"
 	"net/http"
 )
 
@@ -13,11 +14,20 @@ type GoxHttpError struct {
 	StatusCode int
 	Message    string
 	ErrorCode  string
+	Body       []byte
 }
 
 // Build string representation
 func (e *GoxHttpError) Error() string {
-	return fmt.Sprintf("statusCode=%d, err=%v", e.StatusCode, e.Err)
+	if !util.IsStringEmpty(e.Message) && !util.IsStringEmpty(e.ErrorCode) {
+		return fmt.Sprintf("statusCode=%d, message=%s, errorCode=%s, err=%v", e.StatusCode, e.Message, e.ErrorCode, e.Err)
+	} else if !util.IsStringEmpty(e.Message) {
+		return fmt.Sprintf("statusCode=%d, message=%s, err=%v", e.StatusCode, e.Message, e.Err)
+	} else if !util.IsStringEmpty(e.Message) {
+		return fmt.Sprintf("statusCode=%d, errorCode=%s, err=%v", e.StatusCode, e.ErrorCode, e.Err)
+	} else {
+		return fmt.Sprintf("statusCode=%d, err=%v", e.StatusCode, e.Err)
+	}
 }
 
 // Build string representation

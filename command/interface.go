@@ -85,6 +85,18 @@ func (r *GoxResponse) AsStringObjectMapOrEmpty() gox.StringObjectMap {
 	return nil
 }
 
+func (r *GoxResponse) String() string {
+	if r.Err != nil {
+		return fmt.Sprintf("SatusCode=%d, Err=%v", r.StatusCode, r.Err)
+	} else if r.Response != nil {
+		return fmt.Sprintf("SatusCode=%d, Response=%v", r.StatusCode, r.Response)
+	} else if r.Body != nil {
+		return fmt.Sprintf("SatusCode=%d, Body=%v", r.StatusCode, string(r.Body))
+	} else {
+		return fmt.Sprintf("SatusCode=%d", r.StatusCode)
+	}
+}
+
 type Command interface {
 	Execute(ctx context.Context, request *GoxRequest) (*GoxResponse, error)
 	ExecuteAsync(ctx context.Context, request *GoxRequest) chan *GoxResponse

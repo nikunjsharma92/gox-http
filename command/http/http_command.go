@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-http/command"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -60,10 +62,7 @@ func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) 
 	}
 
 	if err != nil {
-		responseObject := &command.GoxResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.Wrap(err, "got error in making http call"),
-		}
+		responseObject := h.handleError(err)
 		return responseObject, responseObject.Err
 	} else {
 		responseObject := h.processResponse(request, response)
@@ -122,6 +121,17 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
 			}
 		}
+	} else {
+		if b, err := serialization.Stringify(request.Body); err == nil {
+			r.SetBody(b)
+		} else {
+			return nil, &command.GoxHttpError{
+				Err:        err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to read body using Stringify",
+				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
+			}
+		}
 	}
 
 	return r, nil
@@ -136,45 +146,100 @@ func (h *httpCommand) processResponse(request *command.GoxRequest, response *res
 		if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
 			if request.ResponseBuilder != nil && response.Body() != nil {
 				processedResponse, err = request.ResponseBuilder.Response(response.Body())
+				if err != nil {
+					return &command.GoxResponse{
+						Body:       response.Body(),
+						StatusCode: response.StatusCode(),
+						Err: &command.GoxHttpError{
+							Err:        errors.Wrap(err, "failed to create response using response builder"),
+							StatusCode: response.StatusCode(),
+							Message:    "failed to create response using response builder",
+							ErrorCode:  "failed_to_build_response_using_response_builder",
+							Body:       response.Body(),
+						},
+					}
+				}
 			}
 		} else {
-			err = errors.New("got error response from server")
+			return &command.GoxResponse{
+				Body:       response.Body(),
+				StatusCode: response.StatusCode(),
+				Err: &command.GoxHttpError{
+					Err:        errors.Wrap(err, "got response with server with error"),
+					StatusCode: response.StatusCode(),
+					Message:    "got response from server with error",
+					ErrorCode:  "server_response_with_error",
+					Body:       response.Body(),
+				},
+			}
 		}
 
-		if err != nil {
-			return &command.GoxResponse{
-				StatusCode: response.StatusCode(),
-				Body:       response.Body(),
-				Err:        errors.Wrap(err, "failed to build response body from server response"),
-			}
-		} else {
-			return &command.GoxResponse{
-				StatusCode: response.StatusCode(),
-				Body:       response.Body(),
-				Response:   processedResponse,
-			}
+		return &command.GoxResponse{
+			StatusCode: response.StatusCode(),
+			Body:       response.Body(),
+			Response:   processedResponse,
 		}
 
 	} else {
 
 		if request.ResponseBuilder != nil && response.Body() != nil {
 			processedResponse, err = request.ResponseBuilder.Response(response.Body())
+			if err != nil {
+				return &command.GoxResponse{
+					Body:       response.Body(),
+					StatusCode: response.StatusCode(),
+					Err: &command.GoxHttpError{
+						Err:        errors.Wrap(err, "failed to create response using response builder"),
+						StatusCode: response.StatusCode(),
+						Message:    "failed to create response using response builder",
+						ErrorCode:  "failed_to_build_response_using_response_builder",
+						Body:       response.Body(),
+					},
+				}
+			}
 		}
 
-		if err != nil {
-			return &command.GoxResponse{
-				StatusCode: response.StatusCode(),
-				Body:       response.Body(),
-				Err:        errors.Wrap(err, "failed to build response body from server response"),
-			}
-		} else {
-			return &command.GoxResponse{
-				StatusCode: response.StatusCode(),
-				Body:       response.Body(),
-				Response:   processedResponse,
+		return &command.GoxResponse{
+			StatusCode: response.StatusCode(),
+			Body:       response.Body(),
+			Response:   processedResponse,
+		}
+	}
+}
+
+func (h *httpCommand) handleError(err error) *command.GoxResponse {
+	var responseObject *command.GoxResponse
+
+	// Timeout errors are handled here
+	switch e := err.(type) {
+	case net.Error:
+		if e.Timeout() {
+			responseObject = &command.GoxResponse{
+				StatusCode: http.StatusRequestTimeout,
+				Err: &command.GoxHttpError{
+					Err:        e,
+					StatusCode: http.StatusRequestTimeout,
+					Message:    "request timeout on client",
+					ErrorCode:  "request_timeout_on_client",
+				},
 			}
 		}
 	}
+
+	// Not a timeout error
+	if responseObject == nil {
+		responseObject = &command.GoxResponse{
+			StatusCode: http.StatusBadRequest,
+			Err: &command.GoxHttpError{
+				Err:        err,
+				StatusCode: http.StatusBadRequest,
+				Message:    "request failed on client",
+				ErrorCode:  "request_failed_on_client",
+			},
+		}
+	}
+
+	return responseObject
 }
 
 func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.Api) (command.Command, error) {

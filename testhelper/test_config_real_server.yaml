@@ -9,3 +9,9 @@ apis:
     server: testServer
     timeout: 10
     concurrency: 3
+  delay_timeout_10_POST:
+    path: /delay
+    method: POST
+    server: testServer
+    timeout: 10
+    concurrency: 3
