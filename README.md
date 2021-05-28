@@ -2,7 +2,12 @@
 Gox Http provides utility to call a http endpoint. It provides following:
 
 1. Define all endpoint and api config in configuration file
-2. Circuit breaker using Hytrix
+2. Circuit breaker using Hystrix
+3. Set concurrency for each api - this ensures that if we go beyond "concurrency" no of parallel requests then 
+   hystrix will reject the requests
+4. Set timeout for each api - the call will timeout if this request takes time > timeout defined
+5. acceptable_codes - list of "," separated status codes which are acceptable. These status codes will not be 
+   counted as errors and will not open hystrix circuit
 
 #### How to use
 Given below is a example on how to use this liberary
