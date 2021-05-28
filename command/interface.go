@@ -37,6 +37,7 @@ type Api struct {
 	Async           bool   `yaml:"async"`
 	AcceptableCodes string `yaml:"acceptable_codes"`
 	acceptableCodes []int
+	DisableHystrix  bool
 }
 
 type Config struct {

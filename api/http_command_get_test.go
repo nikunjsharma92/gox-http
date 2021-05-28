@@ -33,6 +33,7 @@ func Test_Get_Success(t *testing.T) {
 	assert.NoError(t, err)
 	config.Servers["testServer"].Port, err = strconv.Atoi(strings.ReplaceAll(ts.URL, "http://127.0.0.1:", ""))
 	assert.NoError(t, err)
+	config.Apis["delay_timeout_10"].DisableHystrix = true
 
 	// Setup goHttp context
 	goxHttpCtx, err := NewGoxHttpContext(cf, &config)
@@ -70,6 +71,7 @@ func Test_Get_Timeout(t *testing.T) {
 	assert.NoError(t, err)
 	config.Servers["testServer"].Port, err = strconv.Atoi(strings.ReplaceAll(ts.URL, "http://127.0.0.1:", ""))
 	assert.NoError(t, err)
+	config.Apis["delay_timeout_10"].DisableHystrix = true
 
 	// Setup goHttp context
 	goxHttpCtx, err := NewGoxHttpContext(cf, &config)
@@ -89,6 +91,7 @@ func Test_Get_Timeout(t *testing.T) {
 	if e, ok := err.(*command.GoxHttpError); ok {
 		assert.Equal(t, "request_timeout_on_client", e.ErrorCode)
 	} else {
+		fmt.Println(err)
 		assert.Fail(t, "expected GoxHttpError error")
 	}
 }
@@ -111,6 +114,7 @@ func Test_Get_With_Acceptable_Status_Code(t *testing.T) {
 	config.Servers["testServer"].Port, err = strconv.Atoi(strings.ReplaceAll(ts.URL, "http://127.0.0.1:", ""))
 	assert.NoError(t, err)
 
+	config.Apis["delay_timeout_10"].DisableHystrix = true
 	config.Apis["delay_timeout_10"].AcceptableCodes = "202,401"
 
 	// Setup goHttp context
@@ -150,6 +154,7 @@ func Test_Get_With_Unacceptable_Status_Code(t *testing.T) {
 	assert.NoError(t, err)
 	config.Servers["testServer"].Port, err = strconv.Atoi(strings.ReplaceAll(ts.URL, "http://127.0.0.1:", ""))
 	assert.NoError(t, err)
+	config.Apis["delay_timeout_10"].DisableHystrix = true
 
 	// Setup goHttp context
 	goxHttpCtx, err := NewGoxHttpContext(cf, &config)

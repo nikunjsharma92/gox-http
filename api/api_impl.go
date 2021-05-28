@@ -42,7 +42,12 @@ func (g *goxHttpContextImpl) setup() error {
 		}
 
 		// Create http command for this API
-		cmd, err := httpCommand.NewHttpCommand(g.CrossFunction, server, api)
+		var cmd command.Command
+		if api.DisableHystrix {
+			cmd, err = httpCommand.NewHttpCommand(g.CrossFunction, server, api)
+		} else {
+			cmd, err = httpCommand.NewHttpHystrixCommand(g.CrossFunction, server, api)
+		}
 		if err != nil {
 			return errors.Wrap(err, "failed to create http command: api=%s", apiName)
 		}
