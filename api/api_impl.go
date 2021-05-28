@@ -7,6 +7,7 @@ import (
 	"github.com/devlibx/gox-http/command"
 	httpCommand "github.com/devlibx/gox-http/command/http"
 	"go.uber.org/zap"
+	"time"
 )
 
 // Implementation of http context
@@ -15,13 +16,20 @@ type goxHttpContextImpl struct {
 	logger   *zap.Logger
 	config   *command.Config
 	commands map[string]command.Command
+	timeouts map[string]int
 }
 
 func (g *goxHttpContextImpl) Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error) {
 	if cmd, ok := g.commands[api]; !ok {
 		return nil, errors.Wrap(ErrCommandNotRegisteredForApi, "command to execute not found: name=%s", api)
 	} else {
-		return cmd.Execute(ctx, request)
+
+		// Setup context with timeout
+		timeout := g.timeouts[api]
+		newCtx, ctxCancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
+		defer ctxCancel()
+
+		return cmd.Execute(newCtx, request)
 	}
 }
 
@@ -32,6 +40,9 @@ func (g *goxHttpContextImpl) ExecuteAsync(ctx context.Context, api string, reque
 // Internal setup method
 func (g *goxHttpContextImpl) setup() error {
 	g.config.SetupDefaults()
+
+	// Setup timeouts
+	g.timeouts = map[string]int{}
 
 	for apiName, api := range g.config.Apis {
 
@@ -54,6 +65,7 @@ func (g *goxHttpContextImpl) setup() error {
 
 		// Store this http command to use
 		g.commands[apiName] = cmd
+		g.timeouts[apiName] = api.Timeout
 
 	}
 	return nil
