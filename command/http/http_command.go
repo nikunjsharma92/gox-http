@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type httpCommand struct {
@@ -174,5 +175,7 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 		logger:        cf.Logger().Named("goxHttp").Named(api.Name),
 		client:        resty.New(),
 	}
+	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
+
 	return c, nil
 }
