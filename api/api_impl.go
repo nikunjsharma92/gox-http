@@ -2,11 +2,13 @@ package goxHttpApi
 
 import (
 	"context"
+	"fmt"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-http/command"
 	httpCommand "github.com/devlibx/gox-http/command/http"
 	"go.uber.org/zap"
+	"net/http"
 	"time"
 )
 
@@ -21,7 +23,13 @@ type goxHttpContextImpl struct {
 
 func (g *goxHttpContextImpl) Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error) {
 	if cmd, ok := g.commands[api]; !ok {
-		return nil, errors.Wrap(ErrCommandNotRegisteredForApi, "command to execute not found: name=%s", api)
+		return nil, &command.GoxHttpError{
+			Err:        ErrCommandNotRegisteredForApi,
+			StatusCode: http.StatusBadRequest,
+			Message:    fmt.Sprintf("command to execute not found: name=%s", api),
+			ErrorCode:  "command_not_found",
+			Body:       nil,
+		}
 	} else {
 
 		// Setup context with timeout

@@ -9,6 +9,5 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/goleak v1.1.10
 	go.uber.org/zap v1.16.0
 )
