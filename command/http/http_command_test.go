@@ -94,5 +94,3 @@ func TestBuilder(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(result.Response)
 }
-
-

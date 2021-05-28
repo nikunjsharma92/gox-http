@@ -136,7 +136,6 @@ func Test_Get_With_Acceptable_Status_Code(t *testing.T) {
 	assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
 }
 
-
 func Test_Get_With_Unacceptable_Status_Code(t *testing.T) {
 	cf, _ := test.MockCf(t)
 

@@ -104,3 +104,23 @@ func (e *GoxHttpError) IsRequestTimeout() bool {
 func (e *GoxHttpError) IsConflict() bool {
 	return e.StatusCode == http.StatusConflict
 }
+
+// Indicates that this error was caused because hystrix circuit is open due to too many errors
+func (e *GoxHttpError) IsHystrixCircuitOpenError() bool {
+	return e.ErrorCode == "hystrix_circuit_open"
+}
+
+// Indicates that this error was caused because the command took longer then hystrix configured time
+func (e *GoxHttpError) IsHystrixTimeoutError() bool {
+	return e.ErrorCode == "hystrix_timeout"
+}
+
+// Indicates that this error was caused because too many requests are submitted
+func (e *GoxHttpError) IsHystrixRejectedError() bool {
+	return e.ErrorCode == "hystrix_rejected"
+}
+
+// Indicates that this error was caused due to hystrix issue (timeout/circuit open/rejected)
+func (e *GoxHttpError) IsHystrixError() bool {
+	return e.IsHystrixTimeoutError() || e.IsHystrixCircuitOpenError() || e.IsHystrixRejectedError()
+}

@@ -82,6 +82,14 @@ func main() {
 				fmt.Println("got 5xx error")
 			} else if goxError.IsBadRequest() {
 				fmt.Println("got bad request error")
+			} else if goxError.IsHystrixCircuitOpenError() {
+				fmt.Println("hystrix circuit is open due to many errors")
+			} else if goxError.IsHystrixTimeoutError() {
+				fmt.Println("hystrix timeout because http call took longer then configured")
+			} else if goxError.IsHystrixRejectedError() {
+				fmt.Println("hystrix rejected the request because too many concurrent request are made")
+			} else if goxError.IsHystrixError() {
+				fmt.Println("hystrix error - timeout/circuit open/rejected")
 			}
 		} else {
 			fmt.Println("got unknown error")
