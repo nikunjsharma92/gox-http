@@ -115,43 +115,17 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 		if b, err := request.BodyProvider.Body(request.Body); err == nil {
 			r.SetBody(b)
 		} else {
-			return nil, errors.Wrap(err, "failed to set body")
+			return nil, &command.GoxHttpError{
+				Err:        err,
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to read body using body provider",
+				ErrorCode:  command.ErrorCodeFailedToBuildRequest,
+			}
 		}
 	}
 
 	return r, nil
 }
-
-func (h *httpCommand) processError(errorFromCall error) *command.GoxResponse {
-	return &command.GoxResponse{
-		StatusCode: http.StatusInternalServerError,
-		Err:        errors.Wrap(errorFromCall, "got error in making http call"),
-	}
-}
-/*
-func (h *httpCommand) processError1(request *command.GoxRequest, response *resty.Response, errorFromCall error) *command.GoxResponse {
-	if errorFromCall != nil && response != nil {
-		if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
-			return h.processResponse(request, response)
-		} else {
-			return &command.GoxResponse{
-				Body:       response.Body(),
-				StatusCode: response.StatusCode(),
-				Err:        errors.Wrap(errorFromCall, "got error from server with response"),
-			}
-		}
-	} else if errorFromCall != nil {
-		if h.api.IsHttpCodeAcceptable(http.StatusInternalServerError) {
-			return h.processResponse(request, response)
-		} else {
-			return &command.GoxResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errors.Wrap(errorFromCall, "got error from server without response"),
-			}
-		}
-	}
-	return nil
-}*/
 
 func (h *httpCommand) processResponse(request *command.GoxRequest, response *resty.Response) *command.GoxResponse {
 	var processedResponse interface{}
