@@ -1,3 +1,12 @@
+## Gox Http
+Gox Http provides utility to call a http endpoint. It provides following:
+
+1. Define all endpoint and api config in configuration file
+2. Circuit breaker using Hytrix
+
+#### How to use
+Given below is a example on how to use this liberary
+```go
 package main
 
 import (
@@ -39,7 +48,7 @@ apis:
 `
 
 func main() {
-
+	
 	cf := gox.NewCrossFunction()
 
 	// Read config and
@@ -59,10 +68,10 @@ func main() {
 
 	// Make a http call and get the result
 	// 	ResponseBuilder - this is used to convert json response to your custom object
-	//
+	//	
 	//  The following interface can be implemented to convert from bytes to the desired output.
 	//  response.Response will hold the object which is returned from  ResponseBuilder
-	//
+	// 
 	//	type ResponseBuilder interface {
 	//		Response(data []byte) (interface{}, error)
 	//	}
@@ -79,3 +88,5 @@ func main() {
 		// {some json response ...}
 	}
 }
+
+```
