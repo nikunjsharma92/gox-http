@@ -9,6 +9,13 @@ import (
 const ErrorCodeFailedToBuildRequest = "failed_to_build_request"
 const ErrorCodeFailedToRequestServer = "failed_to_request_server"
 
+// Gox Http Module error
+// Err 			- underlying error thrown by http or lib
+// StatusCode 	- http status code
+// Message 		- human readable code for debugging
+// ErrorCode	- pre-defined error codes
+// Body			- data from http response
+//				  This may be nil if we got local errors e.g. hystrix timeout, or some other errors
 type GoxHttpError struct {
 	Err        error
 	StatusCode int
@@ -39,14 +46,17 @@ func (e *GoxHttpError) Is2xx() bool {
 	return e.StatusCode >= http.StatusOK && e.StatusCode <= http.StatusIMUsed
 }
 
+// Is this 3xx error
 func (e *GoxHttpError) Is3xx() bool {
 	return e.StatusCode >= http.StatusBadRequest && e.StatusCode <= http.StatusUnavailableForLegalReasons
 }
 
+// Is this 4xx error
 func (e *GoxHttpError) Is4xx() bool {
 	return e.StatusCode >= http.StatusBadRequest && e.StatusCode <= http.StatusUnavailableForLegalReasons
 }
 
+// Is this 5xx error
 func (e *GoxHttpError) Is5xx() bool {
 	return e.StatusCode >= http.StatusInternalServerError && e.StatusCode <= http.StatusNetworkAuthenticationRequired
 }

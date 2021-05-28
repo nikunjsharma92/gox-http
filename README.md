@@ -48,7 +48,7 @@ apis:
 `
 
 func main() {
-	
+
 	cf := gox.NewCrossFunction()
 
 	// Read config and
@@ -68,10 +68,10 @@ func main() {
 
 	// Make a http call and get the result
 	// 	ResponseBuilder - this is used to convert json response to your custom object
-	//	
+	//
 	//  The following interface can be implemented to convert from bytes to the desired output.
 	//  response.Response will hold the object which is returned from  ResponseBuilder
-	// 
+	//
 	//	type ResponseBuilder interface {
 	//		Response(data []byte) (interface{}, error)
 	//	}
@@ -82,11 +82,23 @@ func main() {
 		Build()
 	response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
 	if err != nil {
-		log.Println("failed to get data", err)
+
+		// Error details can be extracted from *command.GoxHttpError
+		if goxError, ok := err.(*command.GoxHttpError); ok {
+			if goxError.Is5xx() {
+				fmt.Println("got 5xx error")
+			} else if goxError.Is4xx() {
+				fmt.Println("got 5xx error")
+			} else if goxError.IsBadRequest() {
+				fmt.Println("got bad request error")
+			}
+		} else {
+			fmt.Println("got unknown error")
+		}
+
 	} else {
 		fmt.Println(serialization.Stringify(response.Response))
 		// {some json response ...}
 	}
 }
-
 ```

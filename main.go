@@ -73,7 +73,20 @@ func main() {
 		Build()
 	response, err := goxHttpCtx.Execute(context.Background(), "getPosts", request)
 	if err != nil {
-		log.Println("failed to get data", err)
+
+		// Error details can be extracted from *command.GoxHttpError
+		if goxError, ok := err.(*command.GoxHttpError); ok {
+			if goxError.Is5xx() {
+				fmt.Println("got 5xx error")
+			} else if goxError.Is4xx() {
+				fmt.Println("got 5xx error")
+			} else if goxError.IsBadRequest() {
+				fmt.Println("got bad request error")
+			}
+		} else {
+			fmt.Println("got unknown error")
+		}
+
 	} else {
 		fmt.Println(serialization.Stringify(response.Response))
 		// {some json response ...}
