@@ -8,6 +8,7 @@ import (
 	"github.com/devlibx/gox-http/command"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"net"
 	"net/http"
@@ -71,8 +72,16 @@ func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) 
 }
 
 func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequest) (*resty.Request, error) {
+	sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
+	defer sp.Finish()
+	_ = ctxWithSpan
+
 	r := h.client.R()
-	r.SetContext(ctx)
+	r.SetContext(ctxWithSpan)
+
+	// inject opentracing in the outgoing request
+	tracer := opentracing.GlobalTracer()
+	_ = tracer.Inject(sp.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 
 	// Set header
 	if request.Header != nil {
