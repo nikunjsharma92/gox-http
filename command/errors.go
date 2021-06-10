@@ -28,7 +28,7 @@ type GoxHttpError struct {
 func (e *GoxHttpError) Error() string {
 	body := "<no body from server>"
 	if e.Body != nil {
-		body = string(body)
+		body = string(e.Body)
 	}
 	if !util.IsStringEmpty(e.Message) && !util.IsStringEmpty(e.ErrorCode) {
 		return fmt.Sprintf("statusCode=%d, message=%s, body=%s, errorCode=%s, err=%v", e.StatusCode, e.Message, body, e.ErrorCode, e.Err)
