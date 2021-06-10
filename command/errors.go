@@ -26,14 +26,18 @@ type GoxHttpError struct {
 
 // Build string representation
 func (e *GoxHttpError) Error() string {
+	body := "<no body from server>"
+	if e.Body != nil {
+		body = string(body)
+	}
 	if !util.IsStringEmpty(e.Message) && !util.IsStringEmpty(e.ErrorCode) {
-		return fmt.Sprintf("statusCode=%d, message=%s, errorCode=%s, err=%v", e.StatusCode, e.Message, e.ErrorCode, e.Err)
+		return fmt.Sprintf("statusCode=%d, message=%s, body=%s, errorCode=%s, err=%v", e.StatusCode, e.Message, body, e.ErrorCode, e.Err)
 	} else if !util.IsStringEmpty(e.Message) {
-		return fmt.Sprintf("statusCode=%d, message=%s, err=%v", e.StatusCode, e.Message, e.Err)
+		return fmt.Sprintf("statusCode=%d, message=%s, body=%s, err=%v", e.StatusCode, e.Message, body, e.Err)
 	} else if !util.IsStringEmpty(e.Message) {
-		return fmt.Sprintf("statusCode=%d, errorCode=%s, err=%v", e.StatusCode, e.ErrorCode, e.Err)
+		return fmt.Sprintf("statusCode=%d, body=%s, errorCode=%s, err=%v", e.StatusCode, body, e.ErrorCode, e.Err)
 	} else {
-		return fmt.Sprintf("statusCode=%d, err=%v", e.StatusCode, e.Err)
+		return fmt.Sprintf("statusCode=%d, body=%s, err=%v", e.StatusCode, body, e.Err)
 	}
 }
 
