@@ -1,16 +1,19 @@
 ## Gox Http
+
 Gox Http provides utility to call a http endpoint. It provides following:
 
 1. Define all endpoint and api config in configuration file
 2. Circuit breaker using Hystrix
-3. Set concurrency for each api - this ensures that if we go beyond "concurrency" no of parallel requests then 
-   hystrix will reject the requests
+3. Set concurrency for each api - this ensures that if we go beyond "concurrency" no of parallel requests then hystrix
+   will reject the requests
 4. Set timeout for each api - the call will timeout if this request takes time > timeout defined
-5. acceptable_codes - list of "," separated status codes which are acceptable. These status codes will not be 
-   counted as errors and will not open hystrix circuit
+5. acceptable_codes - list of "," separated status codes which are acceptable. These status codes will not be counted as
+   errors and will not open hystrix circuit
 
 #### How to use
+
 Given below is a example on how to use this liberary
+
 ```go
 package main
 
@@ -105,7 +108,7 @@ func main() {
 			} else if goxError.IsHystrixError() {
 				fmt.Println("hystrix error - timeout/circuit open/rejected")
 			}
-			
+
 		} else {
 			fmt.Println("got unknown error")
 		}
@@ -116,4 +119,27 @@ func main() {
 	}
 }
 
+```
+
+#### Retry Handling
+
+You can specify following properties in a API to enable a retry.
+
+1. retry_count - how many times you want to retry
+2. retry_initial_wait_time_ms - a delay before making a retry
+3. NOTE - the total Hystrix timeout will be set to (retry_count * timeout + retry_initial_wait_time_ms)
+   <br> Timeout is the time taken by a single call. So the total time is adjusted to cover retries
+4. If response from a server is an acceptable code then retry will not be done e.g. in this case status=404 will not
+   trigger a retry.
+
+```yaml
+apis:
+  getPosts:
+    method: GET
+    path: /posts/{id}
+    server: jsonplaceholder
+    timeout: 1000
+    acceptable_codes: 200,201,404
+    retry_count: 3
+    retry_initial_wait_time_ms: 10
 ```

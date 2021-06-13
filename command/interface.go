@@ -37,7 +37,7 @@ type Api struct {
 	Async                  bool   `yaml:"async"`
 	AcceptableCodes        string `yaml:"acceptable_codes"`
 	RetryCount             int    `yaml:"retry_count"`
-	InitialRetryWaitTimeMs int    `yaml:"retry_count_ms"`
+	InitialRetryWaitTimeMs int    `yaml:"retry_initial_wait_time_ms"`
 	acceptableCodes        []int
 	DisableHystrix         bool
 }
