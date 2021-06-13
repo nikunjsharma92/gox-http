@@ -92,8 +92,15 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 
 		// Set retry function to avoid retry if this status is acceptable
 		h.client.AddRetryCondition(func(response *resty.Response, err error) bool {
-			if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
+			if response != nil && h.api.IsHttpCodeAcceptable(response.StatusCode()) {
 				return false
+			}
+			if response != nil {
+				h.logger.Info("retrying api after error", zap.Any("response", response))
+			} else if err != nil {
+				h.logger.Info("retrying api after error", zap.String("err", err.Error()))
+			} else {
+				h.logger.Info("retrying api after error")
 			}
 			return true
 		})
