@@ -127,7 +127,7 @@ You can specify following properties in a API to enable a retry.
 
 1. retry_count - how many times you want to retry
 2. retry_initial_wait_time_ms - a delay before making a retry
-3. NOTE - the total Hystrix timeout will be set to (retry_count * timeout + retry_initial_wait_time_ms)
+3. NOTE - the total Hystrix timeout will be set to (timeout + (retry_count * timeout) + retry_initial_wait_time_ms)
    <br> Timeout is the time taken by a single call. So the total time is adjusted to cover retries
 4. If response from a server is an acceptable code then retry will not be done e.g. in this case status=404 will not
    trigger a retry.
