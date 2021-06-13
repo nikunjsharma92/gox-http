@@ -27,17 +27,19 @@ type Apis map[string]*Api
 
 // A single API
 type Api struct {
-	Name            string
-	Method          string `yaml:"method"`
-	Path            string `yaml:"path"`
-	Server          string `yaml:"server"`
-	Timeout         int    `yaml:"timeout"`
-	Concurrency     int    `yaml:"concurrency"`
-	QueueSize       int    `yaml:"queue_size"`
-	Async           bool   `yaml:"async"`
-	AcceptableCodes string `yaml:"acceptable_codes"`
-	acceptableCodes []int
-	DisableHystrix  bool
+	Name                   string
+	Method                 string `yaml:"method"`
+	Path                   string `yaml:"path"`
+	Server                 string `yaml:"server"`
+	Timeout                int    `yaml:"timeout"`
+	Concurrency            int    `yaml:"concurrency"`
+	QueueSize              int    `yaml:"queue_size"`
+	Async                  bool   `yaml:"async"`
+	AcceptableCodes        string `yaml:"acceptable_codes"`
+	RetryCount             int    `yaml:"retry_count"`
+	InitialRetryWaitTimeMs int    `yaml:"retry_count_ms"`
+	acceptableCodes        []int
+	DisableHystrix         bool
 }
 
 type Config struct {

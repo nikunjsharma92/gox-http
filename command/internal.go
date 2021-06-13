@@ -53,6 +53,7 @@ func (c *Config) SetupDefaults() {
 
 			v.acceptableCodes = make([]int, 0)
 			for _, code := range strings.Split(v.AcceptableCodes, ",") {
+				code = strings.TrimSpace(code)
 				if i, err := strconv.Atoi(code); err == nil {
 					v.acceptableCodes = append(v.acceptableCodes, i)
 				}

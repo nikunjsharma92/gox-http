@@ -112,6 +112,12 @@ func NewHttpHystrixCommand(cf gox.CrossFunction, server *command.Server, api *co
 
 	// Set timeout + 10% delta
 	timeout := api.Timeout
+
+	// Add extra time to handle retry counts
+	if api.RetryCount > 0 {
+		timeout = timeout*api.RetryCount + api.InitialRetryWaitTimeMs
+	}
+
 	if timeout/10 <= 0 {
 		timeout += 2
 	} else {

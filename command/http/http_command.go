@@ -79,6 +79,26 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	r := h.client.R()
 	r.SetContext(ctxWithSpan)
 
+	// If retry is enabled then we will setup retrying
+	if h.api.RetryCount >= 0 {
+
+		// Set retry counte defined
+		h.client.SetRetryCount(h.api.RetryCount)
+
+		// Set initial retry time
+		if h.api.InitialRetryWaitTimeMs > 0 {
+			h.client.SetRetryWaitTime(time.Duration(h.api.InitialRetryWaitTimeMs) * time.Millisecond)
+		}
+
+		// Set retry function to avoid retry if this status is acceptable
+		h.client.AddRetryCondition(func(response *resty.Response, err error) bool {
+			if h.api.IsHttpCodeAcceptable(response.StatusCode()) {
+				return false
+			}
+			return true
+		})
+	}
+
 	// inject opentracing in the outgoing request
 	tracer := opentracing.GlobalTracer()
 	_ = tracer.Inject(sp.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
