@@ -13,6 +13,10 @@ import (
 type Servers map[string]*Server
 
 // Defines a single server
+// ****************************************************************************************
+// IMP NOTE - "config_parser.go -> UnmarshalYAML() method is created to do custom parsing.
+// If you change anything here (add/update/delete) you must make changes in UnmarshalYAML()
+// ****************************************************************************************
 type Server struct {
 	Name                     string
 	Host                     string `yaml:"host"`
@@ -26,6 +30,10 @@ type Server struct {
 type Apis map[string]*Api
 
 // A single API
+// ****************************************************************************************
+// IMP NOTE - "config_parser.go -> UnmarshalYAML() method is created to do custom parsing.
+// If you change anything here (add/update/delete) you must make changes in UnmarshalYAML()
+// ****************************************************************************************
 type Api struct {
 	Name                   string
 	Method                 string `yaml:"method"`
@@ -42,7 +50,12 @@ type Api struct {
 	DisableHystrix         bool
 }
 
+// ****************************************************************************************
+// IMP NOTE - "config_parser.go -> UnmarshalYAML() method is created to do custom parsing.
+// If you change anything here (add/update/delete) you must make changes in UnmarshalYAML()
+// ****************************************************************************************
 type Config struct {
+	Env     string  `yaml:"env"`
 	Servers Servers `yaml:"servers"`
 	Apis    Apis    `yaml:"apis"`
 }
