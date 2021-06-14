@@ -143,3 +143,47 @@ apis:
     retry_count: 3
     retry_initial_wait_time_ms: 10
 ```
+----
+## Environment Specific Configs Support
+You can setup all properties with env specific values
+1. env = name of the env (default=prod). This is used to find the values for all properties
+2. add "env: " in front of all values to make it configurable
+3. setup env specific configs
+```yaml
+host: "env: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
+```
+Here host value will be based on the "env" you have provided in a config. For example host will be 
+"localhost.prod" if env=prod, or host="localhost.stage" if env=stage"
+4. Default: You can sprcify "default" - if no value match this will be used
+<br>
+   e.g. ```port: "env: prod=443; default=8080"``` dev/stage/any other will pick port=8080. Only prod will use 443 
+
+
+```yaml
+env: dev
+
+servers:
+  jsonplaceholder:
+    host: "env: prod=jsonplaceholder.typicode.com; stage=localhost.stage; default=localhost.dev"
+    port: "env: prod=443; default=8080"
+    https: true
+    connect_timeout: "env: prod=10; default=1000"
+    connection_request_timeout: "env: prod=11; default=1001"
+  testServer:
+    host: "env: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
+    port: 9123
+    https: "env: prod=true; dev=false; stage=false"
+
+apis:
+  delay_timeout_10:
+    path: /delay/delay_timeout_10
+    server: testServer
+    timeout: "env: prod=10; default=1000"
+    concurrency: "env: prod=10; default=300"
+  delay_timeout_10_POST:
+    path: /delay/delay_timeout_10_POST
+    method: POST
+    server: testServer
+    timeout: "env: prod=100; default=1001"
+    concurrency: "env: prod=11; default=200"
+```
