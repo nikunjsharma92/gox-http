@@ -2,8 +2,6 @@ module github.com/devlibx/gox-http
 
 go 1.16
 
-replace github.com/devlibx/gox-base => /Users/harishbohara/workspace/personal/gox/gox-base
-
 require (
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
 	github.com/devlibx/gox-base v0.0.84
