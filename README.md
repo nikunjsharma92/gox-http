@@ -149,6 +149,7 @@ You can setup all properties with env specific values
 1. env = name of the env (default=prod). This is used to find the values for all properties
 2. add "env: " in front of all values to make it configurable
 3. setup env specific configs
+4. <b> Note - You must use serialization.ReadParameterizedYaml() method if you uses parameterized yaml</b>
 ```yaml
 host: "env:string: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
 ```

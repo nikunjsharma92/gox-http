@@ -2,8 +2,8 @@ package command
 
 import (
 	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/config"
 	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/util"
 )
 
@@ -32,11 +32,11 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			e.Servers[name] = s
 
 			var valueMap gox.StringObjectMap = values.(map[string]interface{})
-			var _host = config.ParameterizedValue(valueMap.StringOrDefault("host", "localhost"))
-			var _https = config.ParameterizedValue(valueMap.StringOrDefault("https", "false"))
-			var _port = config.ParameterizedValue(valueMap.StringOrDefault("port", "80"))
-			var _connectTimeout = config.ParameterizedValue(valueMap.StringOrDefault("connect_timeout", "50"))
-			var connectionRequestTimeout = config.ParameterizedValue(valueMap.StringOrDefault("connection_request_timeout", "50"))
+			var _host = serialization.ParameterizedValue(valueMap.StringOrDefault("host", "localhost"))
+			var _https = serialization.ParameterizedValue(valueMap.StringOrDefault("https", "false"))
+			var _port = serialization.ParameterizedValue(valueMap.StringOrDefault("port", "80"))
+			var _connectTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connect_timeout", "50"))
+			var connectionRequestTimeout = serialization.ParameterizedValue(valueMap.StringOrDefault("connection_request_timeout", "50"))
 
 			if s.Host, err = _host.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing host property for server=%s", name)
@@ -68,15 +68,15 @@ func (e *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 			var valueMap gox.StringObjectMap = values.(map[string]interface{})
 			a.Method = valueMap.StringOrDefault("method", "GET")
-			var path = config.ParameterizedValue(valueMap.StringOrDefault("path", "/"))
-			var server = config.ParameterizedValue(valueMap.StringOrEmpty("server"))
-			var timeout = config.ParameterizedValue(valueMap.StringOrDefault("timeout", "100"))
-			var concurrency = config.ParameterizedValue(valueMap.StringOrDefault("concurrency", "1"))
-			var queue_size = config.ParameterizedValue(valueMap.StringOrDefault("queue_size", "10"))
-			var async = config.ParameterizedValue(valueMap.StringOrDefault("async", "false"))
-			var acceptable_codes = config.ParameterizedValue(valueMap.StringOrDefault("acceptable_codes", "200,201"))
-			var retry_count = config.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
-			var retry_initial_wait_time_ms = config.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
+			var path = serialization.ParameterizedValue(valueMap.StringOrDefault("path", "/"))
+			var server = serialization.ParameterizedValue(valueMap.StringOrEmpty("server"))
+			var timeout = serialization.ParameterizedValue(valueMap.StringOrDefault("timeout", "100"))
+			var concurrency = serialization.ParameterizedValue(valueMap.StringOrDefault("concurrency", "1"))
+			var queue_size = serialization.ParameterizedValue(valueMap.StringOrDefault("queue_size", "10"))
+			var async = serialization.ParameterizedValue(valueMap.StringOrDefault("async", "false"))
+			var acceptable_codes = serialization.ParameterizedValue(valueMap.StringOrDefault("acceptable_codes", "200,201"))
+			var retry_count = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_count", "0"))
+			var retry_initial_wait_time_ms = serialization.ParameterizedValue(valueMap.StringOrDefault("retry_initial_wait_time_ms", "1"))
 
 			if a.Path, err = path.GetString(e.Env); err != nil {
 				return errors.Wrap(err, "error is parsing path property for api=%s", name)
