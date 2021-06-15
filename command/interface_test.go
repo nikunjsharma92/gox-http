@@ -99,28 +99,28 @@ env: dev
 
 servers:
   jsonplaceholder:
-    host: "env: prod=jsonplaceholder.typicode.com; stage=localhost.stage; default=localhost.dev"
-    port: "env: prod=443; default=8080"
+    host: "env:string: prod=jsonplaceholder.typicode.com; stage=localhost.stage; default=localhost.dev"
+    port: "env:int: prod=443; default=8080"
     https: true
-    connect_timeout: "env: prod=10; default=1000"
-    connection_request_timeout: "env: prod=11; default=1001"
+    connect_timeout: "env:int: prod=10; default=1000"
+    connection_request_timeout: "env:int: prod=11; default=1001"
   testServer:
-    host: "env: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
+    host: "env:string: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
     port: 9123
-    https: "env: prod=true; dev=false; stage=false"
+    https: "env:bool: prod=true; dev=false; stage=false"
 
 apis:
   delay_timeout_10:
     path: /delay/delay_timeout_10
     server: testServer
-    timeout: "env: prod=10; default=1000"
-    concurrency: "env: prod=10; default=300"
+    timeout: "env:int: prod=10; default=1000"
+    concurrency: "env:int: prod=10; default=300"
   delay_timeout_10_POST:
     path: /delay/delay_timeout_10_POST
     method: POST
     server: testServer
-    timeout: "env: prod=100; default=1001"
-    concurrency: "env: prod=11; default=200"
+    timeout: "env:int: prod=100; default=1001"
+    concurrency: "env:int: prod=11; default=200"
 `
 
 func TestParseConfigWithParameterizedConfig_WithDev(t *testing.T) {
