@@ -156,7 +156,7 @@ Here host value will be based on the "env" you have provided in a config. For ex
 "localhost.prod" if env=prod, or host="localhost.stage" if env=stage"
 4. Default: You can sprcify "default" - if no value match this will be used
 <br>
-   e.g. ```port: "env: prod=443; default=8080"``` dev/stage/any other will pick port=8080. Only prod will use 443 
+   e.g. ```port: "env:int: prod=443; default=8080"``` dev/stage/any other will pick port=8080. Only prod will use 443 
 
 
 ```yaml
