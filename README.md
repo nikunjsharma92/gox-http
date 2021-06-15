@@ -150,7 +150,7 @@ You can setup all properties with env specific values
 2. add "env: " in front of all values to make it configurable
 3. setup env specific configs
 ```yaml
-host: "env: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
+host: "env:string: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
 ```
 Here host value will be based on the "env" you have provided in a config. For example host will be 
 "localhost.prod" if env=prod, or host="localhost.stage" if env=stage"
