@@ -6,6 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-http/command"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -29,11 +30,24 @@ func (h *httpHystrixCommand) Execute(ctx context.Context, request *command.GoxRe
 	r := &result{}
 	if err := hystrix.Do(h.hystrixCommandName, func() error {
 		r.response, r.err = h.command.Execute(ctx, request)
+		h.logHystrixError(ctx, request, r.err)
 		return r.err
 	}, nil); err != nil {
+		h.logHystrixError(ctx, request, err)
 		return r.response, h.errorCreator(err)
 	} else {
+		h.logHystrixError(ctx, request, r.err)
 		return r.response, r.err
+	}
+}
+
+// If this is a hystrix error then log it
+func (h *httpHystrixCommand) logHystrixError(ctx context.Context, request *command.GoxRequest, err error) {
+	if e, ok := err.(hystrix.CircuitError); ok {
+		span, _ := opentracing.StartSpanFromContext(ctx, h.hystrixCommandName+"_hystrix_error")
+		defer span.Finish()
+		span.SetTag("error", err)
+		span.SetTag("error_tyoe", e.Error())
 	}
 }
 
