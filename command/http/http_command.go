@@ -13,15 +13,17 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
 type httpCommand struct {
 	gox.CrossFunction
-	server *command.Server
-	api    *command.Api
-	logger *zap.Logger
-	client *resty.Client
+	server           *command.Server
+	api              *command.Api
+	logger           *zap.Logger
+	client           *resty.Client
+	setRetryFuncOnce *sync.Once
 }
 
 func (h *httpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
@@ -79,31 +81,33 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	r.SetContext(ctx)
 
 	// If retry is enabled then we will setup retrying
-	if h.api.RetryCount >= 0 {
+	h.setRetryFuncOnce.Do(func() {
+		if h.api.RetryCount >= 0 {
 
-		// Set retry counte defined
-		h.client.SetRetryCount(h.api.RetryCount)
+			// Set retry count defined
+			h.client.SetRetryCount(h.api.RetryCount)
 
-		// Set initial retry time
-		if h.api.InitialRetryWaitTimeMs > 0 {
-			h.client.SetRetryWaitTime(time.Duration(h.api.InitialRetryWaitTimeMs) * time.Millisecond)
+			// Set initial retry time
+			if h.api.InitialRetryWaitTimeMs > 0 {
+				h.client.SetRetryWaitTime(time.Duration(h.api.InitialRetryWaitTimeMs) * time.Millisecond)
+			}
+
+			// Set retry function to avoid retry if this status is acceptable
+			h.client.AddRetryCondition(func(response *resty.Response, err error) bool {
+				if response != nil && h.api.IsHttpCodeAcceptable(response.StatusCode()) {
+					return false
+				}
+				if response != nil {
+					h.logger.Info("retrying api after error", zap.Any("response", response))
+				} else if err != nil {
+					h.logger.Info("retrying api after error", zap.String("err", err.Error()))
+				} else {
+					h.logger.Info("retrying api after error")
+				}
+				return true
+			})
 		}
-
-		// Set retry function to avoid retry if this status is acceptable
-		h.client.AddRetryCondition(func(response *resty.Response, err error) bool {
-			if response != nil && h.api.IsHttpCodeAcceptable(response.StatusCode()) {
-				return false
-			}
-			if response != nil {
-				h.logger.Info("retrying api after error", zap.Any("response", response))
-			} else if err != nil {
-				h.logger.Info("retrying api after error", zap.String("err", err.Error()))
-			} else {
-				h.logger.Info("retrying api after error")
-			}
-			return true
-		})
-	}
+	})
 
 	// inject opentracing in the outgoing request
 	tracer := opentracing.GlobalTracer()
@@ -279,11 +283,12 @@ func (h *httpCommand) handleError(err error) *command.GoxResponse {
 
 func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.Api) (command.Command, error) {
 	c := &httpCommand{
-		CrossFunction: cf,
-		server:        server,
-		api:           api,
-		logger:        cf.Logger().Named("goxHttp").Named(api.Name),
-		client:        resty.New(),
+		CrossFunction:    cf,
+		server:           server,
+		api:              api,
+		logger:           cf.Logger().Named("goxHttp").Named(api.Name),
+		client:           resty.New(),
+		setRetryFuncOnce: &sync.Once{},
 	}
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
 	return c, nil
