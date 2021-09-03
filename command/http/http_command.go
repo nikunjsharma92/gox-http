@@ -37,12 +37,15 @@ func (h *httpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequ
 }
 
 func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+	sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
+	defer sp.Finish()
+
 	h.logger.Debug("got request to execute", zap.Stringer("request", request))
 
 	var response *resty.Response
 
 	// Build request with all parameters
-	r, err := h.buildRequest(ctx, request)
+	r, err := h.buildRequest(ctxWithSpan, request, sp)
 	if err != nil {
 		return nil, err
 	}
@@ -71,13 +74,9 @@ func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) 
 	}
 }
 
-func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequest) (*resty.Request, error) {
-	sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
-	defer sp.Finish()
-	_ = ctxWithSpan
-
+func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequest, sp opentracing.Span) (*resty.Request, error) {
 	r := h.client.R()
-	r.SetContext(ctxWithSpan)
+	r.SetContext(ctx)
 
 	// If retry is enabled then we will setup retrying
 	if h.api.RetryCount >= 0 {
