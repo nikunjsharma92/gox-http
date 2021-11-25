@@ -17,6 +17,14 @@ import (
 	"time"
 )
 
+// StartSpanFromContext is added for someone to override the implementation
+type StartSpanFromContext func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context)
+
+// DefaultStartSpanFromContextFunc provides a default implementation for StartSpanFromContext function
+var DefaultStartSpanFromContextFunc StartSpanFromContext = func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context) {
+	return opentracing.StartSpanFromContext(ctx, operationName, opts...)
+}
+
 type httpCommand struct {
 	gox.CrossFunction
 	server           *command.Server
@@ -39,7 +47,8 @@ func (h *httpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequ
 }
 
 func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
-	sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
+	// sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
+	sp, ctxWithSpan := DefaultStartSpanFromContextFunc(ctx, h.api.Name)
 	defer sp.Finish()
 
 	h.logger.Debug("got request to execute", zap.Stringer("request", request))
