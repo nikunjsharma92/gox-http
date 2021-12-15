@@ -299,6 +299,7 @@ func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.A
 		client:           resty.New(),
 		setRetryFuncOnce: &sync.Once{},
 	}
+	c.client.SetAllowGetMethodPayload(true)
 	c.client.SetTimeout(time.Duration(api.Timeout) * time.Millisecond)
 	return c, nil
 }
