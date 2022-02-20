@@ -25,7 +25,7 @@ var DefaultStartSpanFromContextFunc StartSpanFromContext = func(ctx context.Cont
 	return opentracing.StartSpanFromContext(ctx, operationName, opts...)
 }
 
-type httpCommand struct {
+type HttpCommand struct {
 	gox.CrossFunction
 	server           *command.Server
 	api              *command.Api
@@ -34,7 +34,7 @@ type httpCommand struct {
 	setRetryFuncOnce *sync.Once
 }
 
-func (h *httpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
+func (h *HttpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
 	responseChannel := make(chan *command.GoxResponse)
 	go func() {
 		if result, err := h.Execute(ctx, request); err != nil {
@@ -46,7 +46,7 @@ func (h *httpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequ
 	return responseChannel
 }
 
-func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+func (h *HttpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
 	// sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
 	sp, ctxWithSpan := DefaultStartSpanFromContextFunc(ctx, h.api.Name)
 	defer sp.Finish()
@@ -85,7 +85,7 @@ func (h *httpCommand) Execute(ctx context.Context, request *command.GoxRequest) 
 	}
 }
 
-func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequest, sp opentracing.Span) (*resty.Request, error) {
+func (h *HttpCommand) buildRequest(ctx context.Context, request *command.GoxRequest, sp opentracing.Span) (*resty.Request, error) {
 	r := h.client.R()
 	r.SetContext(ctx)
 
@@ -185,7 +185,7 @@ func (h *httpCommand) buildRequest(ctx context.Context, request *command.GoxRequ
 	return r, nil
 }
 
-func (h *httpCommand) processResponse(request *command.GoxRequest, response *resty.Response) *command.GoxResponse {
+func (h *HttpCommand) processResponse(request *command.GoxRequest, response *resty.Response) *command.GoxResponse {
 	var processedResponse interface{}
 	var err error
 
@@ -255,7 +255,7 @@ func (h *httpCommand) processResponse(request *command.GoxRequest, response *res
 	}
 }
 
-func (h *httpCommand) handleError(err error) *command.GoxResponse {
+func (h *HttpCommand) handleError(err error) *command.GoxResponse {
 	var responseObject *command.GoxResponse
 
 	// Timeout errors are handled here
@@ -291,7 +291,7 @@ func (h *httpCommand) handleError(err error) *command.GoxResponse {
 }
 
 func NewHttpCommand(cf gox.CrossFunction, server *command.Server, api *command.Api) (command.Command, error) {
-	c := &httpCommand{
+	c := &HttpCommand{
 		CrossFunction:    cf,
 		server:           server,
 		api:              api,

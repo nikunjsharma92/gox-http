@@ -188,3 +188,42 @@ apis:
     timeout: "env:int: prod=100; default=1001"
     concurrency: "env:int: prod=11; default=200"
 ```
+---
+
+### How to add or update a new API dynamically
+NOTE - we only support adding new API (new server has not be done manually)
+
+```go
+// Load config from test_config_real_server.yaml example file
+config := command.Config{}
+err := serialization.ReadYamlFromString(testhelper.TestConfigWithRealServer, &config)
+	
+// Suppose a API "delay_timeout_10" was using a path "/delay", and you want to chnage it to point to "/delay_new"
+// Update the config and reload API
+config.Apis["delay_timeout_10"].Path = "/delay_new"
+err = goxHttpCtx.ReloadApi("delay_timeout_10")
+
+
+// Add a new API inimically
+config.Apis["new_api"] = &command.Api{
+    Name:        "new_api",
+    Method:      "GET",
+    Path:        "/bad_new",
+    Server:      "testServer",
+    Timeout:     100,
+    Concurrency: 10,
+    QueueSize:   10,
+}
+err = goxHttpCtx.ReloadApi("new_api")
+
+request = command.NewGoxRequestBuilder("new_api").
+                WithContentTypeJson().
+               WithPathParam("id", 1).
+               WithResponseBuilder(command.NewJsonToObjectResponseBuilder(&gox.StringObjectMap{})).
+               Build()
+response, err = goxHttpCtx.Execute(ctx, "new_api", request)
+assert.NoError(t, err)
+assert.Equal(t, "ok", response.AsStringObjectMapOrEmpty().StringOrEmpty("status"))
+assert.Equal(t, "/bad_new", response.AsStringObjectMapOrEmpty().StringOrEmpty("url"))
+
+```

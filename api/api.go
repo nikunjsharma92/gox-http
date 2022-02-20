@@ -5,6 +5,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-http/command"
+	"sync"
 )
 
 //go:generate mockgen -source=api.go -destination=../mocks/api/mock_api.go -package=mockGoxHttp
@@ -13,6 +14,7 @@ var ErrCommandNotRegisteredForApi = errors.New("api not found")
 
 // Interface to be used by external clients
 type GoxHttpContext interface {
+	ReloadApi(apiToReload string) error
 	Execute(ctx context.Context, api string, request *command.GoxRequest) (*command.GoxResponse, error)
 	ExecuteAsync(ctx context.Context, api string, request *command.GoxRequest) chan *command.GoxResponse
 }
@@ -24,6 +26,7 @@ func NewGoxHttpContext(cf gox.CrossFunction, config *command.Config) (GoxHttpCon
 		logger:        cf.Logger().Named("gox-http"),
 		config:        config,
 		commands:      map[string]command.Command{},
+		lock:          &sync.Mutex{},
 	}
 
 	if err := c.setup(); err != nil {

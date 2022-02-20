@@ -13,7 +13,7 @@ import (
 
 var HystrixConfigMap = gox.StringObjectMap{}
 
-type httpHystrixCommand struct {
+type HttpHystrixCommand struct {
 	gox.CrossFunction
 	logger             *zap.Logger
 	command            command.Command
@@ -21,12 +21,16 @@ type httpHystrixCommand struct {
 	api                *command.Api
 }
 
+func (h *HttpHystrixCommand) UpdateCommand(command command.Command) {
+	h.command = command
+}
+
 type result struct {
 	response *command.GoxResponse
 	err      error
 }
 
-func (h *httpHystrixCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+func (h *HttpHystrixCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
 	r := &result{}
 	if err := hystrix.Do(h.hystrixCommandName, func() error {
 		r.response, r.err = h.command.Execute(ctx, request)
@@ -42,7 +46,7 @@ func (h *httpHystrixCommand) Execute(ctx context.Context, request *command.GoxRe
 }
 
 // If this is a hystrix error then log it
-func (h *httpHystrixCommand) logHystrixError(ctx context.Context, request *command.GoxRequest, err error) {
+func (h *HttpHystrixCommand) logHystrixError(ctx context.Context, request *command.GoxRequest, err error) {
 	if e, ok := err.(hystrix.CircuitError); ok {
 		span, _ := opentracing.StartSpanFromContext(ctx, h.hystrixCommandName+"_hystrix_error")
 		defer span.Finish()
@@ -51,11 +55,11 @@ func (h *httpHystrixCommand) logHystrixError(ctx context.Context, request *comma
 	}
 }
 
-func (h *httpHystrixCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
+func (h *HttpHystrixCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequest) chan *command.GoxResponse {
 	return nil
 }
 
-func (h *httpHystrixCommand) errorCreator(err error) error {
+func (h *HttpHystrixCommand) errorCreator(err error) error {
 	if e, ok := err.(*command.GoxHttpError); ok {
 		return e
 	}
@@ -116,7 +120,7 @@ func NewHttpHystrixCommand(cf gox.CrossFunction, server *command.Server, api *co
 	// name to register hystrix
 	commandName := api.Name
 
-	c := &httpHystrixCommand{
+	c := &HttpHystrixCommand{
 		CrossFunction:      cf,
 		logger:             cf.Logger().Named("goxHttp").Named(api.Name),
 		command:            hc,
