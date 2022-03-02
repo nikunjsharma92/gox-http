@@ -63,3 +63,17 @@ func (mr *MockGoxHttpContextMockRecorder) ExecuteAsync(ctx, api, request interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAsync", reflect.TypeOf((*MockGoxHttpContext)(nil).ExecuteAsync), ctx, api, request)
 }
+
+// ReloadApi mocks base method.
+func (m *MockGoxHttpContext) ReloadApi(apiToReload string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReloadApi", apiToReload)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReloadApi indicates an expected call of ReloadApi.
+func (mr *MockGoxHttpContextMockRecorder) ReloadApi(apiToReload interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReloadApi", reflect.TypeOf((*MockGoxHttpContext)(nil).ReloadApi), apiToReload)
+}
