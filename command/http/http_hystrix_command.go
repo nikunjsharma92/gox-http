@@ -2,6 +2,7 @@ package httpCommand
 
 import (
 	"context"
+	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
@@ -19,6 +20,9 @@ type HttpHystrixCommand struct {
 	command            command.Command
 	hystrixCommandName string
 	api                *command.Api
+
+	serverName string
+	apiName    string
 }
 
 func (h *HttpHystrixCommand) UpdateCommand(command command.Command) {
@@ -51,7 +55,19 @@ func (h *HttpHystrixCommand) logHystrixError(ctx context.Context, request *comma
 		span, _ := opentracing.StartSpanFromContext(ctx, h.hystrixCommandName+"_hystrix_error")
 		defer span.Finish()
 		span.SetTag("error", err)
-		span.SetTag("error_tyoe", e.Error())
+		span.SetTag("error_type", e.Error())
+
+		if EnableGoxHttpMetricLogging {
+			if e == hystrix.ErrMaxConcurrency {
+				h.Metric().Tagged(map[string]string{"server": h.serverName, "api": h.apiName, "status": fmt.Sprintf("%d", 500), "error": "hystrix_error__max_concurrency"}).Counter("gox_http_call").Inc(1)
+			} else if e == hystrix.ErrCircuitOpen {
+				h.Metric().Tagged(map[string]string{"server": h.serverName, "api": h.apiName, "status": fmt.Sprintf("%d", 500), "error": "hystrix_error__circuit_open"}).Counter("gox_http_call").Inc(1)
+			} else if e == hystrix.ErrTimeout {
+				h.Metric().Tagged(map[string]string{"server": h.serverName, "api": h.apiName, "status": fmt.Sprintf("%d", 500), "error": "hystrix_error__timeout"}).Counter("gox_http_call").Inc(1)
+			} else {
+				h.Metric().Tagged(map[string]string{"server": h.serverName, "api": h.apiName, "status": fmt.Sprintf("%d", 500), "error": "hystrix_error"}).Counter("gox_http_call").Inc(1)
+			}
+		}
 	}
 }
 
@@ -126,6 +142,8 @@ func NewHttpHystrixCommand(cf gox.CrossFunction, server *command.Server, api *co
 		command:            hc,
 		hystrixCommandName: commandName,
 		api:                api,
+		serverName:         server.Name,
+		apiName:            api.Name,
 	}
 
 	// Set timeout + 10% delta

@@ -2,6 +2,7 @@ package httpCommand
 
 import (
 	"context"
+	"fmt"
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
@@ -16,6 +17,8 @@ import (
 	"sync"
 	"time"
 )
+
+var EnableGoxHttpMetricLogging = false
 
 // StartSpanFromContext is added for someone to override the implementation
 type StartSpanFromContext func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context)
@@ -47,6 +50,38 @@ func (h *HttpCommand) ExecuteAsync(ctx context.Context, request *command.GoxRequ
 }
 
 func (h *HttpCommand) Execute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
+
+	response, err := h.internalExecute(ctx, request)
+
+	// Log HTTP metrics
+	if EnableGoxHttpMetricLogging {
+		if err == nil {
+			if response == nil {
+				h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", 200)}).Counter("gox_http_call").Inc(1)
+			} else {
+				h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", response.StatusCode)}).Counter("gox_http_call").Inc(1)
+			}
+		} else {
+			if goxErr, ok := err.(*command.GoxHttpError); ok {
+				if response == nil {
+					h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", 500), "error": goxErr.ErrorCode}).Counter("gox_http_call").Inc(1)
+				} else {
+					h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", response.StatusCode), "error": goxErr.ErrorCode}).Counter("gox_http_call").Inc(1)
+				}
+			} else {
+				if response == nil {
+					h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", 500), "error": "unknown"}).Counter("gox_http_call").Inc(1)
+				} else {
+					h.Metric().Tagged(map[string]string{"server": h.server.Name, "api": h.api.Name, "status": fmt.Sprintf("%d", response.StatusCode), "error": "unknown"}).Counter("gox_http_call").Inc(1)
+				}
+			}
+		}
+	}
+
+	return response, err
+}
+
+func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxRequest) (*command.GoxResponse, error) {
 	// sp, ctxWithSpan := opentracing.StartSpanFromContext(ctx, h.api.Name)
 	sp, ctxWithSpan := DefaultStartSpanFromContextFunc(ctx, h.api.Name)
 	defer sp.Finish()
