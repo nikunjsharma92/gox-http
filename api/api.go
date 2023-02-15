@@ -12,8 +12,6 @@ import (
 
 var ErrCommandNotRegisteredForApi = errors.New("api not found")
 
-var EnableTimeTakenByHttpCall = false
-
 // Interface to be used by external clients
 type GoxHttpContext interface {
 	ReloadApi(apiToReload string) error

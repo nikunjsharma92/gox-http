@@ -6,7 +6,6 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
-	goxHttpApi "github.com/devlibx/gox-http/api"
 	"github.com/devlibx/gox-http/command"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
@@ -20,6 +19,7 @@ import (
 )
 
 var EnableGoxHttpMetricLogging = false
+var EnableTimeTakenByHttpCall = false
 
 // StartSpanFromContext is added for someone to override the implementation
 type StartSpanFromContext func(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context)
@@ -113,7 +113,7 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 		response, err = r.Delete(finalUrlToRequest)
 	}
 	end := time.Now()
-	if goxHttpApi.EnableTimeTakenByHttpCall {
+	if EnableTimeTakenByHttpCall {
 		h.logger.Info("Time taken: ", zap.Int64("time_taken", end.UnixMilli()-start.UnixMilli()), zap.String("url", finalUrlToRequest))
 	}
 

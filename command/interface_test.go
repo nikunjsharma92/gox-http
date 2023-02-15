@@ -46,29 +46,31 @@ func TestParseConfig(t *testing.T) {
 }
 
 // servers:
-//  jsonplaceholder:
-//    host: "env: prod=jsonplaceholder.typicode.com; stage=localhost.stage; default: localhost.dev"
-//    port: "env: prod=443; default=8080"
-//    https: true
-//    connect_timeout: "env: prod=10; default=1000"
-//    connection_request_timeout: "env: prod=11; default=1001"
-//  testServer:
-//    host: "env: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
-//    port: 9123
-//    https: "env: prod=true; dev=false; stage=false"
 //
-//apis:
-//  delay_timeout_10:
-//    path: /delay
-//    server: testServer
-//    timeout: "env: prod=10; default=1000"
-//    concurrency: "env: prod=10; default=300"
-//  delay_timeout_10_POST:
-//    path: /delay
-//    method: POST
-//    server: testServer
-//    timeout: "env: prod=100; default=1000"
-//    concurrency: "env: prod=11; default=200"
+//	jsonplaceholder:
+//	  host: "env: prod=jsonplaceholder.typicode.com; stage=localhost.stage; default: localhost.dev"
+//	  port: "env: prod=443; default=8080"
+//	  https: true
+//	  connect_timeout: "env: prod=10; default=1000"
+//	  connection_request_timeout: "env: prod=11; default=1001"
+//	testServer:
+//	  host: "env: prod=localhost.prod; dev=localhost.dev; stage=localhost.stage"
+//	  port: 9123
+//	  https: "env: prod=true; dev=false; stage=false"
+//
+// apis:
+//
+//	delay_timeout_10:
+//	  path: /delay
+//	  server: testServer
+//	  timeout: "env: prod=10; default=1000"
+//	  concurrency: "env: prod=10; default=300"
+//	delay_timeout_10_POST:
+//	  path: /delay
+//	  method: POST
+//	  server: testServer
+//	  timeout: "env: prod=100; default=1000"
+//	  concurrency: "env: prod=11; default=200"
 func TestParseConfigWithParameterizedConfig_WithDefaultEnv(t *testing.T) {
 	config := Config{}
 	err := serialization.ReadYamlFromString(testhelper.TestConfigWithEnv, &config)

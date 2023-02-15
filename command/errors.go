@@ -15,7 +15,8 @@ const ErrorCodeFailedToRequestServer = "failed_to_request_server"
 // Message 		- human readable code for debugging
 // ErrorCode	- pre-defined error codes
 // Body			- data from http response
-//				  This may be nil if we got local errors e.g. hystrix timeout, or some other errors
+//
+//	This may be nil if we got local errors e.g. hystrix timeout, or some other errors
 type GoxHttpError struct {
 	Err        error
 	StatusCode int
