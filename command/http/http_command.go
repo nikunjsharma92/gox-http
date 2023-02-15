@@ -6,6 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/serialization"
+	goxHttpApi "github.com/devlibx/gox-http/api"
 	"github.com/devlibx/gox-http/command"
 	"github.com/go-resty/resty/v2"
 	_ "github.com/go-resty/resty/v2"
@@ -100,6 +101,7 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 	finalUrlToRequest := h.api.GetPath(h.server)
 	h.logger.Debug("url to use", zap.String("url", finalUrlToRequest))
 
+	start := time.Now()
 	switch strings.ToUpper(h.api.Method) {
 	case "GET":
 		response, err = r.Get(finalUrlToRequest)
@@ -109,6 +111,10 @@ func (h *HttpCommand) internalExecute(ctx context.Context, request *command.GoxR
 		response, err = r.Put(finalUrlToRequest)
 	case "DELETE":
 		response, err = r.Delete(finalUrlToRequest)
+	}
+	end := time.Now()
+	if goxHttpApi.EnableTimeTakenByHttpCall {
+		h.logger.Info("Time taken: ", zap.Int64("time_taken", end.UnixMilli()-start.UnixMilli()), zap.String("url", finalUrlToRequest))
 	}
 
 	if err != nil {
