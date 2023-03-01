@@ -50,6 +50,29 @@ type Api struct {
 	DisableHystrix         bool
 }
 
+func (a *Api) GetTimeoutWithRetryIncluded() int {
+
+	if a.RetryCount <= 0 {
+		return a.Timeout
+	}
+
+	// Set timeout + 10% delta
+	timeout := a.Timeout
+
+	// Add extra time to handle retry counts
+	if a.RetryCount > 0 {
+		timeout = timeout + (timeout * a.RetryCount) + a.InitialRetryWaitTimeMs
+	}
+
+	if timeout/10 <= 0 {
+		timeout += 2
+	} else {
+		timeout += timeout / 10
+	}
+
+	return timeout
+}
+
 // ****************************************************************************************
 // IMP NOTE - "config_parser.go -> UnmarshalYAML() method is created to do custom parsing.
 // If you change anything here (add/update/delete) you must make changes in UnmarshalYAML()

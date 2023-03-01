@@ -75,7 +75,8 @@ func (g *goxHttpContextImpl) setup() error {
 
 		// Store this http command to use
 		g.commands[apiName] = cmd
-		g.timeouts[apiName] = api.Timeout
+		// g.timeouts[apiName] = api.Timeout
+		g.timeouts[apiName] = api.GetTimeoutWithRetryIncluded()
 
 	}
 	return nil
